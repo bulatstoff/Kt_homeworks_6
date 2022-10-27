@@ -34,12 +34,22 @@ data class Post(
     val attachments : Array<Attachment>? = emptyArray(),
 
 )
-
 data class Comment(
-    var commentID: Int,
-    var commentAuthorName: String,
-    var commentContent: String,
+    val id : Int? = null, // Идентификатор комментария
+    val postId : Int? = null, // идентификатор поста
+    val fromId : Int? = null, // Идентификатор автора комментария
+    val date : Int? = null,
+    val text : String? = null, // Текст комментария
+    val donut : Donut? = null,
+    val attachments : Array<Attachment>? = emptyArray(),
+    val parentsStack : Array<Int>? = emptyArray(),
+    val thread : Thread? = null
 )
+//data class Comment(
+//    var commentID: Int,
+//    var commentAuthorName: String,
+//    var commentContent: String,
+//)
 
 data class Copyright(
     val id : Long,
@@ -220,14 +230,17 @@ class PhotoAttachment(contentParam : Photo) : Attachment {
         return "\n  $photo"
     }
 }
+class PostIdNotFoundException (message: String) : RuntimeException(message)
 object WallService {
     private var posts = emptyArray<Post>()
 
+    private var comments = emptyArray<Comment>()
     fun add(post: Post): Post {
         posts += post.copy(id = getLastPostId() + 1)
         println("Post added: ${posts.last()}")
         return posts.last()
     }
+
 
     fun getLastPostId(): Int {
         return if (posts.isEmpty()) 0 else posts.last().id
@@ -242,58 +255,88 @@ object WallService {
     }
 
 
-
-    fun update(post: Post): Boolean {
-        var postUpdating = false
-        for ((idx, currentPost) in posts.withIndex()) {
-            if (post.id == currentPost.id) {
-                posts[idx] = currentPost.copy(
-                    id = post.id,
-                    content = post.content,
-                    authorName = post.authorName,
-                    authorid = post.authorid,
-                    likes = post.likes,
-                    comment = post.comment,
-                    isPinned = post.isPinned,
-
-                    date = post.date ,
-                    fromId = post.fromId ,
-                    createdBy = post.createdBy ,
-                    replyOwnerId = post.replyOwnerId ,
-                    replyPostId = post.replyPostId ,
-                    friendsOnly = post.friendsOnly ,
-                    postType = post.postType ,
-                    signerId = post.signerId ,
-                    canPin = post.canPin ,
-                    canDelete = post.canDelete ,
-                    canEdit = post.canEdit ,
-                    markedAsAds = post.markedAsAds,
-                    isFavorite = post.isFavorite ,
-                    postponedId = post.postponedId,
-
-                    copyright = post.copyright,
-                    reposts = post.reposts,
-                    views = post.views,
-                    postSource = post.postSource,
-                    geo = post.geo,
-                    donut = post.donut,
-                    attachments=post.attachments
-                )
-                postUpdating = true
-                println("Updating post with id ${post.id}: ${posts[idx]}")
+    fun createComment(comment: Comment) : Boolean {
+        for (post in posts){
+            if (comment.postId == post.id) {
+                comments += comment
+                return true
             }
         }
-        return postUpdating
+        throw PostIdNotFoundException("По указанному id постов не найдено ")
     }
-}
+
+
+
+        fun update(post: Post): Boolean {
+            var postUpdating = false
+            for ((idx, currentPost) in posts.withIndex()) {
+                if (post.id == currentPost.id) {
+                    posts[idx] = currentPost.copy(
+                        id = post.id,
+                        content = post.content,
+                        authorName = post.authorName,
+                        authorid = post.authorid,
+                        likes = post.likes,
+                        comment = post.comment,
+                        isPinned = post.isPinned,
+
+                        date = post.date,
+                        fromId = post.fromId,
+                        createdBy = post.createdBy,
+                        replyOwnerId = post.replyOwnerId,
+                        replyPostId = post.replyPostId,
+                        friendsOnly = post.friendsOnly,
+                        postType = post.postType,
+                        signerId = post.signerId,
+                        canPin = post.canPin,
+                        canDelete = post.canDelete,
+                        canEdit = post.canEdit,
+                        markedAsAds = post.markedAsAds,
+                        isFavorite = post.isFavorite,
+                        postponedId = post.postponedId,
+
+                        copyright = post.copyright,
+                        reposts = post.reposts,
+                        views = post.views,
+                        postSource = post.postSource,
+                        geo = post.geo,
+                        donut = post.donut,
+                        attachments = post.attachments
+                    )
+                    postUpdating = true
+                    println("Updating post with id ${post.id}: ${posts[idx]}")
+                }
+            }
+            return postUpdating
+        }
+    }
 
 fun main() {
+
     WallService.add(Post(1, "Test content"))
     WallService.add(Post(2, "Test content1"))
     WallService.add(Post(3, "Test content2"))
-    WallService.printArray(2)
 
-    WallService.update(Post(2, "uzzzzzzzzzzz", "Vasiliy"))
+    val comment1 = Comment(
+        1,
+        1,
+        666,
+        3666,
+        "text comment 1dddddd"
+
+    )
+    try {
+        WallService.createComment(comment1)
+    } catch (e: PostIdNotFoundException){
+        println(e.message)
+    }
+
+
+     //WallService.update(Post(id=1,null,null,null,null,comment1))
+    //WallService.createComment(comment1)
+    WallService.printArray(0)
+
+    //WallService.update(Post(2, "uzzzzzzzzzzz", "Vasiliy"))
 }
 
 
